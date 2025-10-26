@@ -2,10 +2,10 @@
 
 all: debug
 
-debug: Package.swift Sources/browserctl.swift
+debug:
 	swift build
 
-release: Package.swift Sources/browserctl.swift
+release:
 	swift build -c release
 
 clean:
