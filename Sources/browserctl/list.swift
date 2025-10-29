@@ -11,32 +11,45 @@ extension Browserctl {
         @OptionGroup var options: OutputOptions
 
         mutating func run() {
-            let appURLs =
-                LSCopyApplicationURLsForURL(URL(string: "http:")! as CFURL, .all)?
-                .takeRetainedValue() as? [URL] ?? []
 
-            if appURLs.isEmpty {
-                print("No browsers found")
-                return
-            }
+            let browsers = BrowserService.listAvailableBrowsers()
 
-            for url in appURLs {
-                guard let bundle = Bundle(url: url) else { continue }
-                let info = bundle.infoDictionary ?? [:]
-                let name =
-                    (info["CFBundleDisplayName"] as? String)
-                    ?? (info["CFBundleName"] as? String)
-                    ?? "Unknown"
-                let id = bundle.bundleIdentifier ?? "UnknownBundleID"
-
+            for b in browsers {
                 if options.idOnly {
-                    print(id)
+                    print(b.id)
                 } else if options.nameOnly {
-                    print(name)
+                    print(b.name)
                 } else {
-                    print("\(id) (\(name))")
+                    print("\(b.id) (\(b.name))")
                 }
             }
         }
+        //     let appURLs =
+        //         LSCopyApplicationURLsForURL(URL(string: "http:")! as CFURL, .all)?
+        //         .takeRetainedValue() as? [URL] ?? []
+        //
+        //     if appURLs.isEmpty {
+        //         print("No browsers found")
+        //         return
+        //     }
+        //
+        //     for url in appURLs {
+        //         guard let bundle = Bundle(url: url) else { continue }
+        //         let info = bundle.infoDictionary ?? [:]
+        //         let name =
+        //             (info["CFBundleDisplayName"] as? String)
+        //             ?? (info["CFBundleName"] as? String)
+        //             ?? "Unknown"
+        //         let id = bundle.bundleIdentifier ?? "UnknownBundleID"
+        //
+        //         if options.idOnly {
+        //             print(id)
+        //         } else if options.nameOnly {
+        //             print(name)
+        //         } else {
+        //             print("\(id) (\(name))")
+        //         }
+        //     }
+        // }
     }
 }
