@@ -49,5 +49,8 @@ node_modules
 
 # project-specific local nvim settings
 .nvim.lua
+.nvim/
 .nvimrc
 .exrc
+
+.lazydev_*
