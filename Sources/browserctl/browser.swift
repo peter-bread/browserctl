@@ -31,12 +31,21 @@ enum BrowserService {
             throw BrowserError.defaultBrowserNotFound
         }
 
-        guard let unmanaged = LSCopyDefaultApplicationURLForURL(schemeURL as CFURL, .all, nil)
-        else {
-            throw BrowserError.defaultBrowserNotFound
-        }
+        let appURL: URL
 
-        let appURL = unmanaged.takeRetainedValue() as URL
+        if #available(macOS 12.0, *) {
+            // Use -[NSWorkspace URLForApplicationToOpenURL:] instead.
+            guard let url = NSWorkspace.shared.urlForApplication(toOpen: schemeURL) else {
+                throw BrowserError.defaultBrowserNotFound
+            }
+            appURL = url
+        } else {
+            guard let unmanaged = LSCopyDefaultApplicationURLForURL(schemeURL as CFURL, .all, nil)
+            else {
+                throw BrowserError.defaultBrowserNotFound
+            }
+            appURL = unmanaged.takeRetainedValue() as URL
+        }
 
         guard let bundle = Bundle(url: appURL) else {
             throw BrowserError.defaultBrowserNotFound
