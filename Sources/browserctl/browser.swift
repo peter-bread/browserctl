@@ -97,19 +97,10 @@ enum BrowserService {
 
         } else {
 
-            try await withCheckedThrowingContinuation { continuation in
-                let result = LSSetDefaultHandlerForURLScheme(
-                    "http" as CFString, bundleId as CFString)
-                if result == noErr {
-                    continuation.resume()
-                } else {
-                    let error = NSError(
-                        domain: NSOSStatusErrorDomain,
-                        code: Int(result),
-                        userInfo: [NSLocalizedDescriptionKey: "Launch Services error \(result)"]
-                    )
-                    continuation.resume(throwing: BrowserError.defaultBrowserNotSet(error))
-                }
+            let result = LSSetDefaultHandlerForURLScheme("http" as CFString, bundleId as CFString)
+            if result != noErr {
+                throw BrowserError.defaultBrowserNotSet(
+                    NSError(domain: NSOSStatusErrorDomain, code: Int(result), userInfo: nil))
             }
 
         }
