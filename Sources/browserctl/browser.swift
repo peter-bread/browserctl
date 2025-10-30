@@ -3,6 +3,7 @@ import Foundation
 
 enum BrowserError: LocalizedError {
     case defaultBrowserNotFound
+    case browserNotFound
     case defaultBrowserNotSet
 
     var errorDescription: String? {
@@ -11,6 +12,8 @@ enum BrowserError: LocalizedError {
             return "Failed to get default browser"
         case .defaultBrowserNotSet:
             return "Failed to set default browser"
+        case .browserNotFound:
+            return "Could not find browser"
         }
     }
 }
@@ -58,10 +61,26 @@ enum BrowserService {
             return BrowserInfo(id: id, name: name, url: url)
         }
     }
+
+    static func setDefaultBrowser(bundleId: String) throws {
+        let browsers = listAvailableBrowsers()
+
+        guard let browser = browsers.first(where: { $0.id == bundleId }) else {
+            throw BrowserError.browserNotFound
+        }
+
+        let result = LSSetDefaultHandlerForURLScheme("http" as CFString, bundleId as CFString)
+        if result != noErr {
+            throw BrowserError.defaultBrowserNotSet
+        }
+
+        print("Default browser set to \(browser.name) (\(browser.id))")
+
+    }
 }
 
 extension Bundle {
-    /// Human-readable app name and bundle ID, with sensible fallbacks.
+    /// Human-readable app name and bundle ID with sensible fallbacks.
     var browserInfo: (name: String, id: String) {
         let info = infoDictionary ?? [:]
         let name =
