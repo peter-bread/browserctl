@@ -4,6 +4,7 @@ import Foundation
 
 enum BrowserError: LocalizedError {
     case defaultBrowserNotFound
+    case failedToGetHTTPUrl
     case browserNotFound(String)
     case defaultBrowserNotSet(Error)
 
@@ -15,6 +16,8 @@ enum BrowserError: LocalizedError {
             return "Failed to set default browser: \(err.localizedDescription)"
         case .browserNotFound(let url):
             return "Could not find browser: \(url)"
+        case .failedToGetHTTPUrl:
+            return "Could not get HTTP scheme URL"
         }
     }
 }
@@ -36,7 +39,7 @@ enum BrowserService {
         if #available(macOS 12.0, *) {
             // Use -[NSWorkspace URLForApplicationToOpenURL:] instead.
             guard let url = NSWorkspace.shared.urlForApplication(toOpen: schemeURL) else {
-                throw BrowserError.defaultBrowserNotFound
+                throw BrowserError.failedToGetHTTPUrl
             }
             appURL = url
         } else {
@@ -58,13 +61,25 @@ enum BrowserService {
 
     /// Returns all browsers that can handle http:// URLs.
     static func listAvailableBrowsers() -> [BrowserInfo] {
-        guard let schemeURL = URL(string: "http:"),
-            let unmanaged = LSCopyApplicationURLsForURL(schemeURL as CFURL, .all)
-        else {
+
+        guard let schemeURL = URL(string: "http:") else {
+            // TODO: Should this be an error?
             return []
         }
 
-        let urls = unmanaged.takeRetainedValue() as? [URL] ?? []
+        let urls: [URL]
+
+        if #available(macOS 12.0, *) {
+            // Use -[NSWorkspace URLsForApplicationsToOpenURL:] instead.
+            urls = NSWorkspace.shared.urlsForApplications(toOpen: schemeURL)
+        } else {
+            guard let unmanaged = LSCopyApplicationURLsForURL(schemeURL as CFURL, .all)
+            else {
+                return []
+            }
+            urls = unmanaged.takeRetainedValue() as? [URL] ?? []
+        }
+
         return urls.compactMap { url in
             guard let bundle = Bundle(url: url) else { return nil }
             let (name, id) = bundle.browserInfo
