@@ -35,10 +35,17 @@ struct BrowserInfo {
     let url: URL
 }
 
+private enum BrowserScheme {
+    static let name = "http"
+    static var url: URL? {
+        URL(string: "\(name):")
+    }
+}
+
 enum BrowserService {
     static func getDefaultBrowser() throws -> BrowserInfo {
-        guard let schemeURL = URL(string: "http:") else {
-            throw BrowserError.invalidSchemeURL("http")
+        guard let schemeURL = BrowserScheme.url else {
+            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
         }
 
         let appURL: URL
@@ -46,13 +53,13 @@ enum BrowserService {
         if #available(macOS 12.0, *) {
             // Use -[NSWorkspace URLForApplicationToOpenURL:] instead.
             guard let url = NSWorkspace.shared.urlForApplication(toOpen: schemeURL) else {
-                throw BrowserError.noDefaultHandlerForScheme("http")
+                throw BrowserError.noDefaultHandlerForScheme(BrowserScheme.name)
             }
             appURL = url
         } else {
             guard let unmanaged = LSCopyDefaultApplicationURLForURL(schemeURL as CFURL, .all, nil)
             else {
-                throw BrowserError.noDefaultHandlerForScheme("http")
+                throw BrowserError.noDefaultHandlerForScheme(BrowserScheme.name)
             }
             appURL = unmanaged.takeRetainedValue() as URL
         }
@@ -69,7 +76,7 @@ enum BrowserService {
     /// Returns all browsers that can handle http:// URLs.
     static func listAvailableBrowsers() -> [BrowserInfo] {
 
-        guard let schemeURL = URL(string: "http:") else {
+        guard let schemeURL = BrowserScheme.url else {
             // TODO: Should this be an error?
             return []
         }
@@ -112,14 +119,15 @@ enum BrowserService {
 
             do {
                 try await NSWorkspace.shared.setDefaultApplication(
-                    at: appURL, toOpenURLsWithScheme: "http")
+                    at: appURL, toOpenURLsWithScheme: BrowserScheme.name)
             } catch {
                 throw BrowserError.defaultBrowserSetFailed(underlying: error)
             }
 
         } else {
 
-            let result = LSSetDefaultHandlerForURLScheme("http" as CFString, bundleId as CFString)
+            let result = LSSetDefaultHandlerForURLScheme(
+                BrowserScheme.name as CFString, bundleId as CFString)
 
             if result != noErr {
                 let error = NSError(
