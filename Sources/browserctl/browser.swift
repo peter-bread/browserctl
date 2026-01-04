@@ -1,19 +1,30 @@
+import AppKit
 import ApplicationServices
 import Foundation
 
 enum BrowserError: LocalizedError {
-    case defaultBrowserNotFound
-    case browserNotFound
-    case defaultBrowserNotSet
+    case invalidSchemeURL(String)
+    case noDefaultHandlerForScheme(String)
+    case failedToLoadAppBundle(URL)
+    case browserWithBundleIDNotInstalled(String)
+    case defaultBrowserSetFailed(underlying: Error)
 
     var errorDescription: String? {
         switch self {
-        case .defaultBrowserNotFound:
-            return "Failed to get default browser"
-        case .defaultBrowserNotSet:
-            return "Failed to set default browser"
-        case .browserNotFound:
-            return "Could not find browser"
+        case .invalidSchemeURL(let scheme):
+            return "Failed to create a URL for scheme '\(scheme)'"
+
+        case .noDefaultHandlerForScheme(let scheme):
+            return "No application is registered to handle the '\(scheme)' scheme."
+
+        case .failedToLoadAppBundle(let url):
+            return "Unable to load application bundle at: \(url.path)."
+
+        case .browserWithBundleIDNotInstalled(let bundleID):
+            return "No installed browser has the bundle identifier '\(bundleID)'."
+
+        case .defaultBrowserSetFailed(let underlying):
+            return "Failed to set the default browser: \(underlying.localizedDescription)"
         }
     }
 }
@@ -24,21 +35,41 @@ struct BrowserInfo {
     let url: URL
 }
 
+private enum BrowserScheme {
+    static let name = "http"
+    static var url: URL? {
+        URL(string: "\(name):")
+    }
+}
+
 enum BrowserService {
     static func getDefaultBrowser() throws -> BrowserInfo {
-        guard let schemeURL = URL(string: "http:") else {
-            throw BrowserError.defaultBrowserNotFound
+        guard let schemeURL = BrowserScheme.url else {
+            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
         }
 
-        guard let unmanaged = LSCopyDefaultApplicationURLForURL(schemeURL as CFURL, .all, nil)
-        else {
-            throw BrowserError.defaultBrowserNotFound
-        }
+        let appURL: URL
 
-        let appURL = unmanaged.takeRetainedValue() as URL
+        if #available(macOS 12.0, *) {
+
+            guard let url = NSWorkspace.shared.urlForApplication(toOpen: schemeURL) else {
+                throw BrowserError.noDefaultHandlerForScheme(BrowserScheme.name)
+            }
+
+            appURL = url
+
+        } else {
+
+            guard let unmanaged = LSCopyDefaultApplicationURLForURL(schemeURL as CFURL, .all, nil)
+            else {
+                throw BrowserError.noDefaultHandlerForScheme(BrowserScheme.name)
+            }
+
+            appURL = unmanaged.takeRetainedValue() as URL
+        }
 
         guard let bundle = Bundle(url: appURL) else {
-            throw BrowserError.defaultBrowserNotFound
+            throw BrowserError.failedToLoadAppBundle(appURL)
         }
 
         let (name, id) = bundle.browserInfo
@@ -48,13 +79,27 @@ enum BrowserService {
 
     /// Returns all browsers that can handle http:// URLs.
     static func listAvailableBrowsers() -> [BrowserInfo] {
-        guard let schemeURL = URL(string: "http:"),
-            let unmanaged = LSCopyApplicationURLsForURL(schemeURL as CFURL, .all)
-        else {
+        guard let schemeURL = BrowserScheme.url else {
             return []
         }
 
-        let urls = unmanaged.takeRetainedValue() as? [URL] ?? []
+        let urls: [URL]
+
+        if #available(macOS 12.0, *) {
+
+            urls = NSWorkspace.shared.urlsForApplications(toOpen: schemeURL)
+
+        } else {
+
+            guard let unmanaged = LSCopyApplicationURLsForURL(schemeURL as CFURL, .all)
+            else {
+                return []
+            }
+
+            urls = unmanaged.takeRetainedValue() as? [URL] ?? []
+
+        }
+
         return urls.compactMap { url in
             guard let bundle = Bundle(url: url) else { return nil }
             let (name, id) = bundle.browserInfo
@@ -62,20 +107,45 @@ enum BrowserService {
         }
     }
 
-    static func setDefaultBrowser(bundleId: String) throws {
+    static func setDefaultBrowser(bundleId: String) async throws {
         let browsers = listAvailableBrowsers()
 
+        // Validate Bundle ID.
         guard let browser = browsers.first(where: { $0.id == bundleId }) else {
-            throw BrowserError.browserNotFound
+            throw BrowserError.browserWithBundleIDNotInstalled(bundleId)
         }
 
-        let result = LSSetDefaultHandlerForURLScheme("http" as CFString, bundleId as CFString)
-        if result != noErr {
-            throw BrowserError.defaultBrowserNotSet
+        if #available(macOS 12.0, *) {
+
+            guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId)
+            else {
+                throw BrowserError.browserWithBundleIDNotInstalled(bundleId)
+            }
+
+            do {
+                try await NSWorkspace.shared.setDefaultApplication(
+                    at: appURL, toOpenURLsWithScheme: BrowserScheme.name)
+            } catch {
+                throw BrowserError.defaultBrowserSetFailed(underlying: error)
+            }
+
+        } else {
+
+            let result = LSSetDefaultHandlerForURLScheme(
+                BrowserScheme.name as CFString, bundleId as CFString)
+
+            if result != noErr {
+                let error = NSError(
+                    domain: NSOSStatusErrorDomain,
+                    code: Int(result)
+                )
+
+                throw BrowserError.defaultBrowserSetFailed(underlying: error)
+            }
+
         }
 
         print("Default browser set to \(browser.name) (\(browser.id))")
-
     }
 }
 

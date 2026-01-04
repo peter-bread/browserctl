@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 
 @main
-struct Browserctl: ParsableCommand {
+struct Browserctl: AsyncParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "A utility to manage default browser on MacOS",
         subcommands: [
