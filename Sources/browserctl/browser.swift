@@ -35,25 +35,25 @@ struct BrowserInfo {
     let url: URL
 }
 
-// TODO: Is this even necessary?
 private enum BrowserScheme {
     static let name = "http"
-    static var url: URL? {
-        URL(string: "\(name):")
+    static var url: URL {
+        URL(string: "\(name):")!
     }
 }
 
 enum BrowserService {
-    private static func browserInfo(for appURL: URL) throws -> BrowserInfo {
-        guard let bundle = Bundle(url: appURL) else {
-            throw BrowserError.failedToLoadAppBundle(appURL)
+    private static func browserInfo(for url: URL) throws -> BrowserInfo {
+        guard let bundle = Bundle(url: url) else {
+            throw BrowserError.failedToLoadAppBundle(url)
         }
 
         let (name, id) = bundle.browserInfo
 
-        return BrowserInfo(id: id, name: name, url: appURL)
+        return BrowserInfo(id: id, name: name, url: url)
     }
 
+    /// Returns the URL to the default application that would be used to open the given URL
     private static func browserURL(for url: URL) -> URL? {
         if #available(macOS 12.0, *) {
             return NSWorkspace.shared.urlForApplication(toOpen: url)
@@ -71,24 +71,16 @@ enum BrowserService {
     }
 
     static func getDefaultBrowser() throws -> BrowserInfo {
-        guard let schemeURL = BrowserScheme.url else {
-            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
+        guard let url = browserURL(for: BrowserScheme.url) else {
+            throw BrowserError.failedToLoadAppBundle(BrowserScheme.url)
         }
 
-        guard let appURL = browserURL(for: schemeURL) else {
-            throw BrowserError.failedToLoadAppBundle(schemeURL)
-        }
-
-        return try browserInfo(for: appURL)
+        return try browserInfo(for: url)
     }
 
     /// Returns all browsers that can handle http:// URLs.
     static func listAvailableBrowsers() throws -> [BrowserInfo] {
-        guard let schemeURL = BrowserScheme.url else {
-            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
-        }
-
-        let urls = browserURLs(for: schemeURL)
+        let urls = browserURLs(for: BrowserScheme.url)
 
         return try urls.compactMap { url in
             return try browserInfo(for: url)
@@ -105,14 +97,14 @@ enum BrowserService {
 
         if #available(macOS 12.0, *) {
 
-            guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId)
+            guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId)
             else {
                 throw BrowserError.browserWithBundleIDNotInstalled(bundleId)
             }
 
             do {
                 try await NSWorkspace.shared.setDefaultApplication(
-                    at: appURL, toOpenURLsWithScheme: BrowserScheme.name)
+                    at: url, toOpenURLsWithScheme: BrowserScheme.name)
             } catch {
                 throw BrowserError.defaultBrowserSetFailed(underlying: error)
             }
