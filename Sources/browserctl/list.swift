@@ -10,9 +10,9 @@ extension Browserctl {
 
         @OptionGroup var options: OutputOptions
 
-        mutating func run() {
+        mutating func run() throws {
 
-            let browsers = BrowserService.listAvailableBrowsers()
+            let browsers = try BrowserService.listAvailableBrowsers()
 
             for b in browsers {
                 if options.idOnly {

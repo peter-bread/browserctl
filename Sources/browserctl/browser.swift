@@ -35,6 +35,7 @@ struct BrowserInfo {
     let url: URL
 }
 
+// TODO: Is this even necessary?
 private enum BrowserScheme {
     static let name = "http"
     static var url: URL? {
@@ -43,31 +44,7 @@ private enum BrowserScheme {
 }
 
 enum BrowserService {
-    static func getDefaultBrowser() throws -> BrowserInfo {
-        guard let schemeURL = BrowserScheme.url else {
-            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
-        }
-
-        let appURL: URL
-
-        if #available(macOS 12.0, *) {
-
-            guard let url = NSWorkspace.shared.urlForApplication(toOpen: schemeURL) else {
-                throw BrowserError.noDefaultHandlerForScheme(BrowserScheme.name)
-            }
-
-            appURL = url
-
-        } else {
-
-            guard let unmanaged = LSCopyDefaultApplicationURLForURL(schemeURL as CFURL, .all, nil)
-            else {
-                throw BrowserError.noDefaultHandlerForScheme(BrowserScheme.name)
-            }
-
-            appURL = unmanaged.takeRetainedValue() as URL
-        }
-
+    private static func browserInfo(for appURL: URL) throws -> BrowserInfo {
         guard let bundle = Bundle(url: appURL) else {
             throw BrowserError.failedToLoadAppBundle(appURL)
         }
@@ -77,38 +54,49 @@ enum BrowserService {
         return BrowserInfo(id: id, name: name, url: appURL)
     }
 
-    /// Returns all browsers that can handle http:// URLs.
-    static func listAvailableBrowsers() -> [BrowserInfo] {
-        guard let schemeURL = BrowserScheme.url else {
-            return []
-        }
-
-        let urls: [URL]
-
+    private static func browserURL(for url: URL) -> URL? {
         if #available(macOS 12.0, *) {
+            return NSWorkspace.shared.urlForApplication(toOpen: url)
+        }
+        return LSCopyDefaultApplicationURLForURL(url as CFURL, .all, nil)?.takeRetainedValue()
+            as URL?
+    }
 
-            urls = NSWorkspace.shared.urlsForApplications(toOpen: schemeURL)
+    private static func browserURLs(for url: URL) -> [URL] {
+        if #available(macOS 12.0, *) {
+            return NSWorkspace.shared.urlsForApplications(toOpen: url)
+        }
+        return (LSCopyApplicationURLsForURL(url as CFURL, .all)?.takeRetainedValue() as? [URL])
+            ?? []
+    }
 
-        } else {
-
-            guard let unmanaged = LSCopyApplicationURLsForURL(schemeURL as CFURL, .all)
-            else {
-                return []
-            }
-
-            urls = unmanaged.takeRetainedValue() as? [URL] ?? []
-
+    static func getDefaultBrowser() throws -> BrowserInfo {
+        guard let schemeURL = BrowserScheme.url else {
+            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
         }
 
-        return urls.compactMap { url in
-            guard let bundle = Bundle(url: url) else { return nil }
-            let (name, id) = bundle.browserInfo
-            return BrowserInfo(id: id, name: name, url: url)
+        guard let appURL = browserURL(for: schemeURL) else {
+            throw BrowserError.failedToLoadAppBundle(schemeURL)
+        }
+
+        return try browserInfo(for: appURL)
+    }
+
+    /// Returns all browsers that can handle http:// URLs.
+    static func listAvailableBrowsers() throws -> [BrowserInfo] {
+        guard let schemeURL = BrowserScheme.url else {
+            throw BrowserError.invalidSchemeURL(BrowserScheme.name)
+        }
+
+        let urls = browserURLs(for: schemeURL)
+
+        return try urls.compactMap { url in
+            return try browserInfo(for: url)
         }
     }
 
     static func setDefaultBrowser(bundleId: String) async throws {
-        let browsers = listAvailableBrowsers()
+        let browsers = try listAvailableBrowsers()
 
         // Validate Bundle ID.
         guard let browser = browsers.first(where: { $0.id == bundleId }) else {
