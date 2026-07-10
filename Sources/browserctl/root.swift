@@ -21,4 +21,11 @@ struct OutputOptions: ParsableArguments {
 
     @Flag(name: .shortAndLong, help: "Print only the app name")
     var nameOnly = false
+
+    mutating func validate() throws {
+        if idOnly && nameOnly {
+            throw ValidationError.init(
+                "options '--id-only' and '--name-only' are mutually exclusive")
+        }
+    }
 }
