@@ -12,7 +12,7 @@ Manage default browser on MacOS from the command line.
 
 ## Install
 
-> [!WARN]
+> [!WARNING]
 >
 > Currently there are no super convenient ways to install.
 >
