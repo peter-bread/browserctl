@@ -1,3 +1,17 @@
+/*
+ * ========================= YOU CAN IGNORE THIS FILE ==========================
+ *
+ * THIS IS THE CORE OF THE PREVIOUS IMPLEMENTATION WHICH ALSO SUPPORTED OLDER
+ * VERSIONS OF MACOS USING A DEPRECATED API.
+ *
+ * THIS EXISTS SO THERE IS AN EASY REFERENCE IF FOR SOME REASON I EVER NEED TO
+ * SUPPORT OLDER MACOS VERSIONS.
+ *
+ * IT IS EXCLUDED FROM COMPILATION IN 'Package.swift'.
+ *
+ * =============================================================================
+ */
+
 import AppKit
 import Foundation
 
