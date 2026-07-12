@@ -10,20 +10,23 @@ extension Browserctl {
 
         @OptionGroup var options: OutputOptions
 
+        @Flag(name: .shortAndLong, help: "Print JSON")
+        var json = false
+
         mutating func run() throws {
-
-            let browsers = try BrowserService.listAvailableBrowsers()
-
-            for b in browsers {
-                if options.idOnly {
-                    print(b.id)
-                } else if options.nameOnly {
-                    print(b.name)
-                } else {
-                    print("\(b.id) (\(b.name))")
-                }
+            if !json {
+                prettyPrint(idOnly: options.idOnly, nameOnly: options.nameOnly)
+            } else {
+                let data = try printJson()
+                print(String(data: data, encoding: .utf8)!)
             }
         }
 
+        mutating func validate() throws {
+            if json && (options.idOnly || options.nameOnly) {
+                throw ValidationError.init(
+                    "option '--json' cannot be used with '--id-only' or '--name-only'")
+            }
+        }
     }
 }
