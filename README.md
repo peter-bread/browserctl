@@ -14,7 +14,7 @@ Get current default browser:
 browserctl get
 ```
 
-List availble browsers:
+List available browsers:
 
 ```bash
 browserctl list
