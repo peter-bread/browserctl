@@ -1,143 +1,173 @@
 import AppKit
-import ApplicationServices
 import Foundation
 
+enum BrowserManager {
+    static func all() -> Browsers {
+        let def = defaultAppURL()
+        let urls = availableAppURLs()
+
+        let browsers = urls.map { url in
+            let (name, id) = bundleInfo(for: url)
+            return Browser(name: name, id: id, url: url, isDefault: url == def)
+        }
+
+        return browsers
+    }
+
+    static func defaultBrowser() -> Browser? {
+        return all().default
+    }
+
+    static func setBrowser(id: String) async throws {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else {
+            throw BrowserError.invalidBrowserID(id)
+        }
+
+        // WARN: This should be fine to force unwrap
+        let scheme = http.scheme!
+
+        do {
+            try await NSWorkspace.shared.setDefaultApplication(
+                at: url, toOpenURLsWithScheme: scheme)
+        } catch {
+            throw BrowserError.failedToSetBrowser(underlying: error)
+        }
+
+        let browser = bundleInfo(for: url)
+
+        print("Set the default browser to: \(browser.name) (\(browser.id))")
+    }
+}
+
 enum BrowserError: LocalizedError {
-    case invalidSchemeURL(String)
-    case noDefaultHandlerForScheme(String)
-    case failedToLoadAppBundle(URL)
-    case browserWithBundleIDNotInstalled(String)
-    case defaultBrowserSetFailed(underlying: Error)
+    case noDefaultBrowser
+    case invalidBrowserID(String)
+    case failedToSetBrowser(underlying: Error)
 
     var errorDescription: String? {
         switch self {
-        case .invalidSchemeURL(let scheme):
-            return "Failed to create a URL for scheme '\(scheme)'"
 
-        case .noDefaultHandlerForScheme(let scheme):
-            return "No application is registered to handle the '\(scheme)' scheme."
+        case .noDefaultBrowser:
+            return "No default browser"
 
-        case .failedToLoadAppBundle(let url):
-            return "Unable to load application bundle at: \(url.path)."
+        case .invalidBrowserID(let id):
+            return "Invalid browser id: \(id)"
 
-        case .browserWithBundleIDNotInstalled(let bundleID):
-            return "No installed browser has the bundle identifier '\(bundleID)'."
-
-        case .defaultBrowserSetFailed(let underlying):
-            return "Failed to set the default browser: \(underlying.localizedDescription)"
+        case .failedToSetBrowser(let underlying):
+            return "Failed to set browser: \(underlying.localizedDescription)"
         }
     }
 }
 
-struct BrowserInfo {
-    let id: String
-    let name: String
-    let url: URL
+// WARN: This should be fine to force unwrap
+private let http = URL(string: "http:")!
+
+/// Returns the URL of the default app to open 'http:' URLs.
+private func defaultAppURL() -> URL? {
+    return NSWorkspace.shared.urlForApplication(toOpen: http)
 }
 
-private enum BrowserScheme {
-    static let name = "http"
-    static var url: URL {
-        URL(string: "\(name):")!
-    }
-}
-
-enum BrowserService {
-    private static func browserInfo(for url: URL) throws -> BrowserInfo {
-        guard let bundle = Bundle(url: url) else {
-            throw BrowserError.failedToLoadAppBundle(url)
-        }
-
-        let (name, id) = bundle.browserInfo
-
-        return BrowserInfo(id: id, name: name, url: url)
-    }
-
-    /// Returns the URL to the default application that would be used to open the given URL
-    private static func browserURL(for url: URL) -> URL? {
-        if #available(macOS 12.0, *) {
-            return NSWorkspace.shared.urlForApplication(toOpen: url)
-        }
-        return LSCopyDefaultApplicationURLForURL(url as CFURL, .all, nil)?.takeRetainedValue()
-            as URL?
-    }
-
-    private static func browserURLs(for url: URL) -> [URL] {
-        if #available(macOS 12.0, *) {
-            return NSWorkspace.shared.urlsForApplications(toOpen: url)
-        }
-        return (LSCopyApplicationURLsForURL(url as CFURL, .all)?.takeRetainedValue() as? [URL])
-            ?? []
-    }
-
-    static func getDefaultBrowser() throws -> BrowserInfo {
-        guard let url = browserURL(for: BrowserScheme.url) else {
-            throw BrowserError.failedToLoadAppBundle(BrowserScheme.url)
-        }
-
-        return try browserInfo(for: url)
-    }
-
-    /// Returns all browsers that can handle http:// URLs.
-    static func listAvailableBrowsers() throws -> [BrowserInfo] {
-        let urls = browserURLs(for: BrowserScheme.url)
-
-        return try urls.compactMap { url in
-            return try browserInfo(for: url)
-        }
-    }
-
-    static func setDefaultBrowser(bundleId: String) async throws {
-        let browsers = try listAvailableBrowsers()
-
-        // Validate Bundle ID.
-        guard let browser = browsers.first(where: { $0.id == bundleId }) else {
-            throw BrowserError.browserWithBundleIDNotInstalled(bundleId)
-        }
-
-        if #available(macOS 12.0, *) {
-
-            guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId)
-            else {
-                throw BrowserError.browserWithBundleIDNotInstalled(bundleId)
-            }
-
-            do {
-                try await NSWorkspace.shared.setDefaultApplication(
-                    at: url, toOpenURLsWithScheme: BrowserScheme.name)
-            } catch {
-                throw BrowserError.defaultBrowserSetFailed(underlying: error)
-            }
-
-        } else {
-
-            let result = LSSetDefaultHandlerForURLScheme(
-                BrowserScheme.name as CFString, bundleId as CFString)
-
-            if result != noErr {
-                let error = NSError(
-                    domain: NSOSStatusErrorDomain,
-                    code: Int(result)
-                )
-
-                throw BrowserError.defaultBrowserSetFailed(underlying: error)
-            }
-
-        }
-
-        print("Default browser set to \(browser.name) (\(browser.id))")
-    }
+/// Returns an array of URLs to all available applications that can open 'http:' URLs.
+private func availableAppURLs() -> [URL] {
+    return NSWorkspace.shared.urlsForApplications(toOpen: http)
 }
 
 extension Bundle {
-    /// Human-readable app name and bundle ID with sensible fallbacks.
-    var browserInfo: (name: String, id: String) {
-        let info = infoDictionary ?? [:]
-        let name =
-            (info["CFBundleDisplayName"] as? String)
-            ?? (info["CFBundleName"] as? String)
-            ?? "Unknown"
-        let id = bundleIdentifier ?? "UnknownBundleID"
-        return (name, id)
+    fileprivate func string(key: String) -> String? {
+        infoDictionary?[key] as? String
+    }
+}
+
+private func bundleInfo(for url: URL) -> (name: String, id: String) {
+    guard let bundle = Bundle(url: url) else {
+        return ("Unknown", "Unknown")
+    }
+
+    let name =
+        bundle.string(key: "CFBundleDisplayName")
+        ?? bundle.string(key: "CFBundleName")
+        ?? "Unknown"
+
+    let id =
+        bundle.bundleIdentifier
+        ?? "Unknown"
+
+    return (name, id)
+}
+
+struct Browser: Codable {
+    let name: String
+    let id: String
+    let url: URL
+    let isDefault: Bool
+}
+
+enum BrowserFormat {
+    case full
+    case id
+    case name
+
+    static func get(idOnly: Bool, nameOnly: Bool) -> BrowserFormat {
+        if idOnly {
+            return .id
+        }
+
+        if nameOnly {
+            return .name
+        }
+
+        return .full
+    }
+}
+
+extension Browser {
+    /// Displays a browser as a string in the given format. If `max` is
+    /// provided, the full format will have all names aligned.
+    func formatted(as format: BrowserFormat, max: Int? = nil) -> String {
+        switch format {
+        case .full:
+            let name =
+                if let max {
+                    name.padding(toLength: max, withPad: " ", startingAt: 0)
+                } else {
+                    name
+                }
+            return "\(name) (\(id))"
+
+        case .name:
+            return name
+
+        case .id:
+            return id
+        }
+    }
+}
+
+typealias Browsers = [Browser]
+
+extension Browsers {
+    var `default`: Browser? {
+        self.first(where: \.isDefault)
+    }
+
+    var jsonData: Data {
+        get throws {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            return try encoder.encode(self)
+        }
+    }
+
+    func outputLines(format: BrowserFormat) -> [String] {
+        var lines: [String] = []
+
+        let max = format == .full ? self.map(\.name.count).max() : nil
+
+        for browser in self {
+            let marker = browser.isDefault ? "*" : " "
+            lines.append("\(marker) \(browser.formatted(as: format, max: max))")
+        }
+
+        return lines
     }
 }

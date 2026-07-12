@@ -1,4 +1,3 @@
-import ApplicationServices
 import ArgumentParser
 import Foundation
 
@@ -12,7 +11,7 @@ extension Browserctl {
         var bundleId: String
 
         mutating func run() async throws {
-            try await BrowserService.setDefaultBrowser(bundleId: bundleId)
+            try await BrowserManager.setBrowser(id: bundleId)
         }
     }
 }

@@ -1,4 +1,3 @@
-import ApplicationServices
 import ArgumentParser
 import Foundation
 
@@ -14,11 +13,26 @@ extension Browserctl {
         var json = false
 
         mutating func run() throws {
-            if !json {
-                prettyPrint(idOnly: options.idOnly, nameOnly: options.nameOnly)
-            } else {
-                let data = try printJson()
-                print(String(data: data, encoding: .utf8)!)
+            let browsers = BrowserManager.all()
+
+            if json {
+                let data = try browsers.jsonData
+                print(String(decoding: data, as: UTF8.self))
+                return
+            }
+
+            if browsers.isEmpty {
+                print("No browsers found")
+                return
+            }
+
+            let format = BrowserFormat.get(
+                idOnly: options.idOnly,
+                nameOnly: options.nameOnly
+            )
+
+            for line in browsers.outputLines(format: format) {
+                print(line)
             }
         }
 
