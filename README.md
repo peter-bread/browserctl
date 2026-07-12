@@ -6,6 +6,10 @@ Manage default browser on MacOS from the command line.
 
 - MacOS 12.0 (Monterey) or later
 
+### Build-only
+
+- Swift 5.9 or later
+
 ## Usage
 
 Get current default browser:
