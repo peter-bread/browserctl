@@ -159,15 +159,11 @@ extension Browsers {
     }
 
     func outputLines(format: BrowserFormat) -> [String] {
-        var lines: [String] = []
-
         let max = format == .full ? self.map(\.name.count).max() : nil
 
-        for browser in self {
+        return self.map { browser in
             let marker = browser.isDefault ? "*" : " "
-            lines.append("\(marker) \(browser.formatted(as: format, max: max))")
+            return "\(marker) \(browser.formatted(as: format, max: max))"
         }
-
-        return lines
     }
 }
