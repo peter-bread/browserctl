@@ -10,6 +10,32 @@ Manage default browser on MacOS from the command line.
 
 - Swift 5.9 or later
 
+## Install
+
+> [!WARN]
+>
+> Currently there are no super convenient ways to install.
+>
+> The two planned methods are:
+>
+> 1. My Homebrew tap
+> 1. GitHUb Releases prebuilt binaries
+>
+> See [this issue](https://github.com/peter-bread/browserctl/issues/5).
+
+### Build from Source
+
+```bash
+git clone https://github.com/peter-bread/browserctl
+cd browserctl
+make release
+install -m 0755 ./.build/release/browserctl "$HOME"/.local/bin
+```
+
+> [!NOTE]
+>
+> There will be a [`make install`](https://github.com/peter-bread/browserctl/issues/10) at some point.
+
 ## Usage
 
 Get current default browser:
