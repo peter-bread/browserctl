@@ -2,6 +2,10 @@
 
 Manage default browser on MacOS from the command line.
 
+## Requirements
+
+- MacOS 12.0 (Monterey) or later
+
 ## Usage
 
 Get current default browser:
