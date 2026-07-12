@@ -18,7 +18,8 @@ let package = Package(
             name: "browserctl",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
-            ]
+            ],
+            exclude: ["Browserctl/UNUSED"]
         )
     ]
 )

@@ -1,5 +1,4 @@
 import ArgumentParser
-import Foundation
 
 extension Browserctl {
     struct Get: ParsableCommand {

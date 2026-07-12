@@ -1,5 +1,4 @@
 import ArgumentParser
-import Foundation
 
 @main
 struct Browserctl: AsyncParsableCommand {
