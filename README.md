@@ -18,8 +18,8 @@ Manage default browser on MacOS from the command line.
 >
 > The two planned methods are:
 >
-> 1. My Homebrew tap
-> 1. GitHUb Releases prebuilt binaries
+> 1. My [Homebrew tap](https://github.com/peter-bread/homebrew-tap)
+> 1. GitHub Releases (prebuilt binaries)
 >
 > See [this issue](https://github.com/peter-bread/browserctl/issues/5).
 
