@@ -78,11 +78,11 @@ For example, the following are equivalent:
 
 ```bash
 browserctl set chrome             # name
-browserctl set 'google chrome'    # display name
+browserctl set 'GooGLe ChrOme'    # display name
 browserctl set com.google.Chrome  # id
 ```
 
-Currently, there is no support for [fuzzy matching or suggestions](https://github.com/peter-bread/browserctl/issues/11).
+Currently, there is no [support for fuzzy matching or suggestions](https://github.com/peter-bread/browserctl/issues/11).
 
 ## Acknowledgements
 
