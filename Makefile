@@ -16,4 +16,4 @@ clean:
 PREFIX ?= /usr/local
 
 install:
-	install -m 0755 ./.build/release/browserctl $(PREFIX)/bin
+	install -d -m 0755 ./.build/release/browserctl $(PREFIX)/bin
