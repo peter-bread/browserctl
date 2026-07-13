@@ -6,11 +6,11 @@ extension Browserctl {
             abstract: "Set the default browser"
         )
 
-        @Argument(help: "The bundle identifier of the browser, e.g. com.google.Chrome")
-        var bundleId: String
+        @Argument(help: "A query that should match the bundle name or ID of the browser")
+        var query: String
 
         mutating func run() async throws {
-            try await BrowserManager.setBrowser(id: bundleId)
+            try await BrowserManager.setBrowser(query: query)
         }
     }
 }

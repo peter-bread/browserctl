@@ -62,11 +62,27 @@ browserctl list
 For each of the above, you can use `--name-only` or `--id-only` to filter the
 output data.
 
-Set new default browser:
+Set default browser:
 
 ```bash
-browserctl set <bundle-id>
+browserctl set <query>
 ```
+
+The query must be an exact, case-insenstive match against one of, in order:
+
+1. bundle ID
+1. bundle display name
+1. bundle name
+
+For example, the following are equivalent:
+
+```bash
+browserctl set chrome             # name
+browserctl set 'google chrome'    # display name
+browserctl set com.google.Chrome  # id
+```
+
+Currently, there is no support for [fuzzy matching or suggestions](https://github.com/peter-bread/browserctl/issues/11).
 
 ## Acknowledgements
 

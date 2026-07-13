@@ -1,10 +1,30 @@
 import Foundation
 
 struct Browser: Codable {
-    let name: String
+    let displayName: String?
+    let name: String?
     let id: String
     let url: URL
     let isDefault: Bool
+
+    var display: String {
+        displayName ?? name ?? id
+    }
+
+    init?(from url: URL, isDefault: Bool) {
+        guard
+            let bundle = Bundle(url: url),
+            let id = bundle.bundleIdentifier
+        else {
+            return nil
+        }
+
+        displayName = bundle.string(key: "CFBundleDisplayName")
+        name = bundle.string(key: "CFBundleName")
+        self.id = id
+        self.url = url
+        self.isDefault = isDefault
+    }
 }
 
 extension Browser {
@@ -15,14 +35,14 @@ extension Browser {
         case .full:
             let name =
                 if let max {
-                    name.padding(toLength: max, withPad: " ", startingAt: 0)
+                    display.padding(toLength: max, withPad: " ", startingAt: 0)
                 } else {
-                    name
+                    display
                 }
             return "\(name) (\(id))"
 
         case .name:
-            return name
+            return display
 
         case .id:
             return id
@@ -46,11 +66,69 @@ extension Browsers {
     }
 
     func outputLines(format: BrowserFormat) -> [String] {
-        let max = format == .full ? self.map(\.name.count).max() : nil
+        let max = format == .full ? self.map(\.display.count).max() : nil
 
         return self.map { browser in
             let marker = browser.isDefault ? "*" : " "
             return "\(marker) \(browser.formatted(as: format, max: max))"
         }
+    }
+}
+
+// MARK: - Matching
+
+extension Browser {
+    func matchScore(_ query: String) -> Int {
+        let terms = [
+            id,
+            displayName,
+            name,
+        ].compactMap { $0?.localizedLowercase }
+
+        if terms.contains(query) {
+            return 100
+        }
+
+        // TODO: Return lower score for partial matches for suggestions
+        //
+        // Perhaps use Levenshtein distance
+        //
+        // https://github.com/peter-bread/browserctl/issues/11
+
+        // if terms.contains(where: { $0.hasPrefix(query) }) {
+        //     return 50
+        // }
+        //
+        // if terms.contains(where: { $0.contains(query) }) {
+        //     return 25
+        // }
+
+        return 0
+    }
+}
+
+extension Browsers {
+    func matching(_ query: String) -> [Browser] {
+        let query = query.localizedLowercase
+
+        // TODO: Lower threshold to also return suggestions if query
+        // doesn't match exactly
+        //
+        // https://github.com/peter-bread/browserctl/issues/11
+
+        return sorted {
+            $0.matchScore(query) > $1.matchScore(query)
+        }
+        .filter {
+            $0.matchScore(query) >= 100
+        }
+    }
+}
+
+// MARK: - Utils
+
+extension Bundle {
+    fileprivate func string(key: String) -> String? {
+        infoDictionary?[key] as? String
     }
 }

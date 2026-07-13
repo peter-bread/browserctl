@@ -13,7 +13,10 @@ extension Browserctl {
                 throw BrowserError.noDefaultBrowser
             }
 
-            let format = BrowserFormat.get(idOnly: options.idOnly, nameOnly: options.nameOnly)
+            let format = BrowserFormat.get(
+                idOnly: options.idOnly,
+                nameOnly: options.nameOnly
+            )
 
             print(browser.formatted(as: format))
         }

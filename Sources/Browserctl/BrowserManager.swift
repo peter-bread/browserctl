@@ -2,12 +2,13 @@ import AppKit
 
 enum BrowserManager {
     static func all() -> Browsers {
+        // TODO: Should these be in Browser.swift and then the isDefault argument
+        // removed from the constructor.
         let def = defaultAppURL()
         let urls = availableAppURLs()
 
-        let browsers = urls.map { url in
-            let (name, id) = bundleInfo(for: url)
-            return Browser(name: name, id: id, url: url, isDefault: url == def)
+        let browsers = urls.compactMap { url in
+            return Browser(from: url, isDefault: url == def)
         }
 
         return browsers
@@ -17,9 +18,17 @@ enum BrowserManager {
         return all().default
     }
 
-    static func setBrowser(id: String) async throws {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else {
-            throw BrowserError.invalidBrowserID(id)
+    static func setBrowser(query: String) async throws {
+        let browsers = all()
+
+        // TODO: If one match, use that, else list matches and ask for more specific query
+        guard let browser = browsers.matching(query).first else {
+            throw BrowserError.noBrowserMatchesQuery(query)
+        }
+
+        if browser.isDefault {
+            print("\(browser.display) is already the default browser")
+            return
         }
 
         // WARN: This should be fine to force unwrap
@@ -27,16 +36,16 @@ enum BrowserManager {
 
         do {
             try await NSWorkspace.shared.setDefaultApplication(
-                at: url, toOpenURLsWithScheme: scheme)
+                at: browser.url, toOpenURLsWithScheme: scheme)
         } catch {
             throw BrowserError.failedToSetBrowser(underlying: error)
         }
 
-        let browser = bundleInfo(for: url)
-
-        print("Set the default browser to: \(browser.name) (\(browser.id))")
+        print("Set the default browser to: \(browser.display) (\(browser.id))")
     }
 }
+
+// MARK: - Utils
 
 // WARN: This should be fine to force unwrap
 private let http = URL(string: "http:")!
@@ -49,27 +58,4 @@ private func defaultAppURL() -> URL? {
 /// Returns an array of URLs to all available applications that can open 'http:' URLs.
 private func availableAppURLs() -> [URL] {
     return NSWorkspace.shared.urlsForApplications(toOpen: http)
-}
-
-extension Bundle {
-    fileprivate func string(key: String) -> String? {
-        infoDictionary?[key] as? String
-    }
-}
-
-private func bundleInfo(for url: URL) -> (name: String, id: String) {
-    guard let bundle = Bundle(url: url) else {
-        return ("Unknown", "Unknown")
-    }
-
-    let name =
-        bundle.string(key: "CFBundleDisplayName")
-        ?? bundle.string(key: "CFBundleName")
-        ?? "Unknown"
-
-    let id =
-        bundle.bundleIdentifier
-        ?? "Unknown"
-
-    return (name, id)
 }
