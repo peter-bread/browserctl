@@ -25,14 +25,16 @@ Manage default browser on MacOS from the command line.
 
 ### Build from Source
 
-Build and install `browserctl`. By default, the executable is installed to
-`/usr/local/bin`.
+Build and install `browserctl`.
+
+By default, the executable is installed to `/usr/local/bin`, which will require
+`sudo`.
 
 ```bash
 git clone https://github.com/peter-bread/browserctl
 cd browserctl
 make release
-make install
+sudo make install
 ```
 
 To install to a different location, specify a prefix:
