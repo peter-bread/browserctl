@@ -47,6 +47,12 @@ The executable will be installed to `<PREFIX>/bin`.
 
 ## Usage
 
+> [!TIP]
+>
+> For more information, be sure to use `browserctl help` and `browserctl help <subcommand>`.
+>
+> (Or `browserctl -h` and `browserctl <subcommand> -h`)
+
 Get current default browser:
 
 ```bash
