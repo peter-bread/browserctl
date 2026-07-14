@@ -65,12 +65,15 @@ extension Browsers {
         }
     }
 
-    func outputLines(format: BrowserFormat) -> [String] {
+    func outputLines(format: BrowserFormat, withMarker: Bool = true) -> [String] {
         let max = format == .full ? self.map(\.display.count).max() : nil
 
         return self.map { browser in
-            let marker = browser.isDefault ? "*" : " "
-            return "\(marker) \(browser.formatted(as: format, max: max))"
+            let marker =
+                withMarker
+                ? "\(browser.isDefault ? "*" : " ") "
+                : ""
+            return "\(marker)\(browser.formatted(as: format, max: max))"
         }
     }
 }
