@@ -6,10 +6,7 @@ struct Browser: Codable {
     let id: String
     let url: URL
     let isDefault: Bool
-
-    var display: String {
-        displayName ?? name ?? id
-    }
+    let display: String
 
     init?(from url: URL, isDefault: Bool) {
         guard
@@ -21,6 +18,13 @@ struct Browser: Codable {
 
         displayName = bundle.string(key: "CFBundleDisplayName")
         name = bundle.string(key: "CFBundleName")
+
+        // Guarantee that there is some kind of name
+        guard let display = displayName ?? name else {
+            return nil
+        }
+
+        self.display = display
         self.id = id
         self.url = url
         self.isDefault = isDefault
