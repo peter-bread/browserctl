@@ -8,6 +8,7 @@ struct Browserctl: AsyncParsableCommand {
             Get.self,
             Set.self,
             List.self,
+            Launch.self,
         ]
     )
 }

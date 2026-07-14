@@ -8,7 +8,7 @@ enum BrowserManager {
         let urls = availableAppURLs()
 
         let browsers = urls.compactMap { url in
-            return Browser(from: url, isDefault: url == def)
+            Browser(from: url, isDefault: url == def)
         }
 
         return browsers
@@ -46,7 +46,7 @@ enum BrowserManager {
             throw BrowserError.failedToSetBrowser(underlying: error)
         }
 
-        print("Set the default browser to: \(browser.display) (\(browser.id))")
+        print("Set the default browser to: \(browser.formatted(as: .full))")
     }
 }
 
