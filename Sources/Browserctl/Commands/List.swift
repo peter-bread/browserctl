@@ -20,7 +20,10 @@ extension Browserctl {
 
             if json {
                 let data = try browsers.jsonData
-                print(String(decoding: data, as: UTF8.self))
+                guard let str = String(bytes: data, encoding: .utf8) else {
+                    throw BrowserError.couldNotConvertJsonDataToString
+                }
+                print(str)
                 return
             }
 
