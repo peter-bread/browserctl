@@ -6,7 +6,8 @@ extension Browserctl {
             abstract: "Get the default browser"
         )
 
-        @OptionGroup var options: OutputOptions
+        @OptionGroup
+        private var options: OutputOptions
 
         mutating func run() throws {
             guard let browser = BrowserManager.defaultBrowser() else {

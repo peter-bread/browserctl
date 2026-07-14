@@ -10,12 +10,12 @@ extension Browserctl {
             help: "A query that should match the bundle name or ID of the browser",
             completion: .custom(listBrowserIDsAndNames)
         )
-        var query: String
+        private var query: String
 
         @Flag(
             name: [.long, .customShort("n")],
             help: "Don't actually attempt to set default browser; just print what it would do")
-        var dryRun: Bool = false
+        private var dryRun: Bool = false
 
         mutating func run() async throws {
             try await BrowserManager.setBrowser(query: query, dryRun: dryRun)

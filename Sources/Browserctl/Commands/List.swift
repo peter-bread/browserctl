@@ -6,13 +6,14 @@ extension Browserctl {
             abstract: "List all installed browsers"
         )
 
-        @OptionGroup var options: OutputOptions
+        @OptionGroup
+        private var options: OutputOptions
 
         @Flag(name: .shortAndLong, help: "Print JSON")
-        var json = false
+        private var json = false
 
         @Flag(name: .long, help: "Do not mark default browser")
-        var noMarker = false
+        private var noMarker = false
 
         mutating func run() throws {
             let browsers = BrowserManager.all()
