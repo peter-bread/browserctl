@@ -18,7 +18,7 @@ enum BrowserManager {
         return all().default
     }
 
-    static func setBrowser(query: String) async throws {
+    static func setBrowser(query: String, dryRun: Bool = false) async throws {
         let browsers = all()
 
         // TODO: If one match, use that, else list matches and ask for more specific query
@@ -28,6 +28,11 @@ enum BrowserManager {
 
         if browser.isDefault {
             print("\(browser.display) is already the default browser")
+            return
+        }
+
+        if dryRun {
+            print("Would try to set default browser to: \(browser.display) (\(browser.id))")
             return
         }
 

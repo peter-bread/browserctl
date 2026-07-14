@@ -12,8 +12,13 @@ extension Browserctl {
         )
         var query: String
 
+        @Flag(
+            name: [.long, .customShort("n")],
+            help: "Don't actually attempt to set default browser; just print what it would do")
+        var dryRun: Bool = false
+
         mutating func run() async throws {
-            try await BrowserManager.setBrowser(query: query)
+            try await BrowserManager.setBrowser(query: query, dryRun: dryRun)
         }
     }
 }
