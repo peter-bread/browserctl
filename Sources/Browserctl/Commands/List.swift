@@ -11,6 +11,9 @@ extension Browserctl {
         @Flag(name: .shortAndLong, help: "Print JSON")
         var json = false
 
+        @Flag(name: .long, help: "Do not mark default browser")
+        var noMarker = false
+
         mutating func run() throws {
             let browsers = BrowserManager.all()
 
@@ -30,15 +33,16 @@ extension Browserctl {
                 nameOnly: options.nameOnly
             )
 
-            for line in browsers.outputLines(format: format) {
+            for line in browsers.outputLines(format: format, withMarker: !noMarker) {
                 print(line)
             }
         }
 
         mutating func validate() throws {
-            if json && (options.idOnly || options.nameOnly) {
+            if json && (options.idOnly || options.nameOnly || noMarker) {
                 throw ValidationError.init(
-                    "option '--json' cannot be used with '--id-only' or '--name-only'")
+                    "--json cannot be combined with output formatting options"
+                )
             }
         }
     }
