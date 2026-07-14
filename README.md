@@ -84,6 +84,18 @@ browserctl set com.google.Chrome  # id
 
 Currently, there is no [support for fuzzy matching, suggestions or multiple matches](https://github.com/peter-bread/browserctl/issues/11).
 
+### Shell Completion
+
+You can generate shell completion with:
+
+```bash
+browserctl --generate-completion-script <shell>
+```
+
+where `shell` is one of `bash`, `zsh` or `fish`.
+
+This is especially useful for the `browserctl set` command as it provides names and identifiers.
+
 ## Acknowledgements
 
 - https://stackoverflow.com/questions/17528688/set-default-web-browser-via-command-line
