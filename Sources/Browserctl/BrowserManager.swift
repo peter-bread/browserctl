@@ -46,7 +46,7 @@ enum BrowserManager {
             throw BrowserError.failedToSetBrowser(underlying: error)
         }
 
-        print("Set the default browser to: \(browser.display) (\(browser.id))")
+        print("Set the default browser to: \(browser.formatted(as: .full))")
     }
 }
 
