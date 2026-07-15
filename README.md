@@ -90,6 +90,22 @@ browserctl set com.google.Chrome  # id
 
 Currently, there is no [support for fuzzy matching, suggestions or multiple matches](https://github.com/peter-bread/browserctl/issues/11).
 
+#### Launch browser
+
+```bash
+# launch default browser
+browserctl launch
+
+# launch specified browser
+browserctl launch <name|id>
+
+# launch default browser and open url
+browserctl launch --url <url>
+
+# launch specified browser and open url
+browserctl launch <name|id> --url <url>
+```
+
 ### Shell Completion
 
 You can generate shell completion with:
