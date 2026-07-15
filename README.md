@@ -53,13 +53,13 @@ The executable will be installed to `<PREFIX>/bin`.
 >
 > (Or `browserctl -h` and `browserctl <subcommand> -h`)
 
-Get current default browser:
+#### Get current default browser
 
 ```bash
 browserctl get
 ```
 
-List available browsers:
+#### List available browsers
 
 ```bash
 browserctl list
@@ -68,7 +68,7 @@ browserctl list
 For each of the above, you can use `--name-only` or `--id-only` to filter the
 output data.
 
-Set default browser:
+#### Set default browser
 
 ```bash
 browserctl set <query>
