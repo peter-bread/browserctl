@@ -7,6 +7,8 @@ on:
     branches:
       - main
 
+# MacOS runner information: https://github.com/actions/runner-images/tree/main/images/macos
+
 jobs:
   build-and-test:
     strategy:
