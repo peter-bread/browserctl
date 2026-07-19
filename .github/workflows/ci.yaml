@@ -8,8 +8,12 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: macos-latest
+  build-and-test:
+    strategy:
+      matrix:
+        os: [macos-latest, macos-15, macos-14]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v7
@@ -17,17 +21,11 @@ jobs:
       - name: Build
         run: swift build -v
 
-      - name: Check `browserctl` runs
-        run: ./.build/debug/browserctl list
-
-  test:
-    runs-on: macos-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
       - name: Test
         run: swift test -v
+
+      - name: Check `browserctl` runs
+        run: ./.build/debug/browserctl list
 
   lint:
     runs-on: macos-latest
