@@ -13,4 +13,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-      - run: make
+
+      - name: Build
+        run: swift build -v
+
+      - name: Check `browserctl` runs
+        run: ./.build/debug/browserctl list
+
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test
+        run: swift test -v
+
+  lint:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Lint
+        run: swiftlint lint --reporter github-actions-logging

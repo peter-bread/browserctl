@@ -1,17 +1,5 @@
 import ArgumentParser
-
-@main
-struct Browserctl: AsyncParsableCommand {
-    static var configuration = CommandConfiguration(
-        abstract: "A utility to manage default browser on MacOS",
-        subcommands: [
-            Get.self,
-            Set.self,
-            List.self,
-            Launch.self,
-        ]
-    )
-}
+import BrowserCore
 
 /// Options for how browser information should be displayed to the user.
 /// Mainly useful for scripting & automation.
@@ -24,8 +12,15 @@ struct OutputOptions: ParsableArguments {
 
     mutating func validate() throws {
         if idOnly && nameOnly {
-            throw ValidationError.init(
-                "options '--id-only' and '--name-only' are mutually exclusive")
+            throw ValidationError("options '--id-only' and '--name-only' are mutually exclusive")
         }
+    }
+}
+
+extension OutputOptions {
+    var format: BrowserFormat {
+        if idOnly { return .id }
+        if nameOnly { return .name }
+        return .full
     }
 }

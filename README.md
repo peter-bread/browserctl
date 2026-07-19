@@ -4,7 +4,7 @@ Manage default browser on MacOS from the command line.
 
 ## Requirements
 
-- MacOS 12.0 (Monterey) or later
+- MacOS 13.0 (Ventura) or later
 
 ### Build-only
 
