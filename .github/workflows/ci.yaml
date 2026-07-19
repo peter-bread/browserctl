@@ -26,8 +26,23 @@ jobs:
       - name: Test
         run: swift test -v
 
-      - name: Check `browserctl` runs
+      - name: Run `browserctl -h`
+        run: ./.build/debug/browserctl -h
+
+      - name: Run `browserctl list`
         run: ./.build/debug/browserctl list
+
+      - name: Check Safari is default browser
+        run: |
+          DEFAULT=$(./.build/debug/browserctl get --id-only)
+          EXPECTED="com.apple.Safari"
+
+          if [ "$DEFAULT" != "$EXPECTED" ]; then
+            echo "Error: Expected $EXPECTED but got $DEFAULT"
+            exit 1
+          fi
+
+          echo "Success: Safari is the default browser"
 
   lint:
     runs-on: macos-latest
