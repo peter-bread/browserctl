@@ -4,7 +4,7 @@ import ArgumentParser
 struct BrowserctlCommand: AsyncParsableCommand {
     static var configuration = CommandConfiguration(
         commandName: "browserctl",
-        abstract: "A utility to manage default browser on MacOS",
+        abstract: "A utility to manage default browser on macOS",
         subcommands: [
             Get.self,
             Set.self,
