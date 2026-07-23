@@ -1,6 +1,7 @@
 import ArgumentParser
+import BrowserCore
 
-extension Browserctl {
+extension BrowserctlCommand {
     struct List: ParsableCommand {
         static var configuration = CommandConfiguration(
             abstract: "List all installed browsers"
@@ -16,7 +17,8 @@ extension Browserctl {
         private var noMarker = false
 
         mutating func run() throws {
-            let browsers = BrowserManager.all()
+            let manager = BrowserManager()
+            let browsers = manager.browsers()
 
             if json {
                 let data = try browsers.jsonData
@@ -32,21 +34,17 @@ extension Browserctl {
                 return
             }
 
-            let format = BrowserFormat.get(
-                idOnly: options.idOnly,
-                nameOnly: options.nameOnly
-            )
+            let max = options.format == .full ? browsers.map(\.display.count).max() : nil
 
-            for line in browsers.outputLines(format: format, withMarker: !noMarker) {
-                print(line)
+            for browser in browsers {
+                let marker = noMarker ? "" : (browser.isDefault ? "* " : "  ")
+                print("\(marker)\(browser.formatted(as: options.format, max: max))")
             }
         }
 
         mutating func validate() throws {
             if json && (options.idOnly || options.nameOnly || noMarker) {
-                throw ValidationError.init(
-                    "--json cannot be combined with output formatting options"
-                )
+                throw ValidationError("--json cannot be combined with output formatting options")
             }
         }
     }

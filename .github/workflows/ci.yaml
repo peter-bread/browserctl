@@ -7,10 +7,51 @@ on:
     branches:
       - main
 
+# MacOS runner information: https://github.com/actions/runner-images/tree/main/images/macos
+
 jobs:
-  build:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [macos-latest, macos-15, macos-14]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: swift build -v
+
+      - name: Test
+        run: swift test -v
+
+      - name: Run `browserctl -h`
+        run: ./.build/debug/browserctl -h
+
+      - name: Run `browserctl list`
+        run: ./.build/debug/browserctl list
+
+      - name: Check Safari is default browser
+        run: |
+          DEFAULT=$(./.build/debug/browserctl get --id-only)
+          EXPECTED="com.apple.Safari"
+
+          if [ "$DEFAULT" != "$EXPECTED" ]; then
+            echo "Error: Expected $EXPECTED but got $DEFAULT"
+            exit 1
+          fi
+
+          echo "Success: Safari is the default browser"
+
+  lint:
     runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v7
-      - run: make
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Lint
+        run: swiftlint lint --reporter github-actions-logging

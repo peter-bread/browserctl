@@ -1,10 +1,10 @@
 # Browserctl
 
-Manage default browser on MacOS from the command line.
+Manage default browser on macOS from the command line.
 
 ## Requirements
 
-- MacOS 12.0 (Monterey) or later
+- macOS 13.0 (Ventura) or later
 
 ### Build-only
 
