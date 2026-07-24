@@ -22,9 +22,7 @@ clean:
 
 .PHONY: install generate-manpage install-manpage install-all
 
-# TODO: Should PREFIX be changed to something that doesn't require sudo,
-# for example $(HOME)/.local
-PREFIX ?= /usr/local
+PREFIX ?= $(HOME)/.local
 BIN     = $(PREFIX)/bin
 MAN     = $(PREFIX)/share/man
 

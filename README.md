@@ -14,36 +14,52 @@ Manage default browser on macOS from the command line.
 
 > [!WARNING]
 >
-> Currently there are no super convenient ways to install.
->
-> The two planned methods are:
->
-> 1. My [Homebrew tap](https://github.com/peter-bread/homebrew-tap)
-> 1. GitHub Releases (prebuilt binaries)
+> I Plan to make this available in my [Homebrew tap](https://github.com/peter-bread/homebrew-tap).
 >
 > See [this issue](https://github.com/peter-bread/browserctl/issues/5).
+
+### GitHub Releases
+
+Pre-built binaries are available via GitHub Releases.
+
+You can also use the provided installation script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/peter-bread/browserctl/refs/heads/main/scripts/install.sh | bash
+```
+
+This will install the `browserctl` binary and manpage to the `~/.local` prefix.
+
+Optionally, set the `PREFIX` environment variable:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/peter-bread/browserctl/refs/heads/main/scripts/install.sh | PREFIX=/usr/local bash
+```
+
+This may require updating `MANPATH`.
 
 ### Build from Source
 
 Build and install `browserctl`.
 
-By default, the executable is installed to `/usr/local/bin`, which will require
-`sudo`.
+By default, the executable is installed to the prefix `~/.local`, meaning the
+path to the executable is `~/.local/bin/browserctl`.
+
+The `install-all` target will build and install both the binary and manpage.
 
 ```bash
 git clone https://github.com/peter-bread/browserctl
 cd browserctl
-make release
-sudo make install
+make install-all
 ```
+
+For just the binary, use `make release && make install`.
 
 To install to a different location, specify a prefix:
 
 ```bash
-make install PREFIX=$HOME/.local
+sudo make install PREFIX=/usr/local
 ```
-
-The executable will be installed to `<PREFIX>/bin`.
 
 ## Usage
 
