@@ -1,0 +1,74 @@
+---
+name: Release
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0.9]+
+
+jobs:
+  macos:
+    permissions:
+      contents: write
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build (release configuration)
+        run: make release
+      - name: Generate manpage
+        run: make generate-manpage
+
+      - name: Package
+        id: package
+        run: |-
+          # TODO: Use install instead of mv/cp?
+          mkdir -p "$PKG"/{bin,share/man/man1}
+
+          cp README.md "$PKG"
+          cp LICENSE "$PKG"
+
+          mv ./.build/release/browserctl "$PKG"/bin
+          mv ./.build/plugins/GenerateManual/outputs/browserctl/browserctl.1 "$PKG"/share/man/man1
+          # TODO: Should we package completions as well, or just let users generate them manually.
+
+          # TODO: Should we include a '-macos' suffix
+
+          tar -czvf "$PKG.tar.gz" "$PKG"
+
+          echo "name=$PKG" >> $GITHUB_OUTPUT
+          echo "path=$PKG.tar.gz" >> $GITHUB_OUTPUT
+        env:
+          PKG: browserctl-${{ github.ref_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.path }}
+          archive: false # We have already used tar so we do not need to zip too
+
+  publish:
+    needs: macos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+      - name: Create release
+        run: |
+          gh release create "$TAG" --generate-notes "$ASSET"
+        env:
+          TAG: ${{ github.ref_name }}
+          ASSET: browserctl-${{ github.ref_name }}
+
+  # bump-homebrew:
+  #   runs-on: ubuntu-slim
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #     - uses: peter-bread/homebrew-bump@v2
+  #       with:
+  #         cellarman-app-client-id: ${{ vars.CELLARMAN_APP_CLIENT_ID }}
+  #         cellarman-app-private-key: ${{ secrets.CELLARMAN_APP_PRIVATE_KEY }}
+  #         tap-owner: peter-bread
