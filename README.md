@@ -2,6 +2,8 @@
 
 Manage default browser on macOS from the command line.
 
+[![CI](https://github.com/peter-bread/browserctl/actions/workflows/ci.yaml/badge.svg)](https://github.com/peter-bread/browserctl/actions/workflows/ci.yaml)
+
 ## Requirements
 
 - macOS 13.0 (Ventura) or later
