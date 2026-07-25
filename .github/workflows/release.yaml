@@ -64,12 +64,12 @@ jobs:
           TAG: ${{ github.ref_name }}
           ASSET: browserctl-${{ github.ref_name }}.tar.gz
 
-  # bump-homebrew:
-  #   runs-on: ubuntu-slim
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #     - uses: peter-bread/homebrew-bump@v2
-  #       with:
-  #         cellarman-app-client-id: ${{ vars.CELLARMAN_APP_CLIENT_ID }}
-  #         cellarman-app-private-key: ${{ secrets.CELLARMAN_APP_PRIVATE_KEY }}
-  #         tap-owner: peter-bread
+  bump-homebrew:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v7
+      - uses: peter-bread/homebrew-bump@v2
+        with:
+          cellarman-app-client-id: ${{ vars.CELLARMAN_APP_CLIENT_ID }}
+          cellarman-app-private-key: ${{ secrets.CELLARMAN_APP_PRIVATE_KEY }}
+          tap-owner: peter-bread
