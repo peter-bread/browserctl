@@ -14,11 +14,11 @@ Manage default browser on macOS from the command line.
 
 ## Install
 
-> [!WARNING]
->
-> I Plan to make this available in my [Homebrew tap](https://github.com/peter-bread/homebrew-tap).
->
-> See [this issue](https://github.com/peter-bread/browserctl/issues/5).
+### Homebrew
+
+```bash
+brew install peter-bread/tap/browserctl
+```
 
 ### GitHub Releases
 
