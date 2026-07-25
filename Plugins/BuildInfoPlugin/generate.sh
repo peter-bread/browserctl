@@ -3,7 +3,12 @@
 OUTPUT_FILE=$1
 
 # First try BROWSERCTL_VERSION environment variable, then fall back to git describe.
-: "${BROWSERCTL_VERSION:=$(git describe --tags --always --dirty 2>/dev/null || echo "unknown")}"
+: "${BROWSERCTL_VERSION:=$(
+  version=$(git describe --tags --always --dirty 2>/dev/null || echo "unknown")
+  printf '%s' "${version#v}"
+)}"
+
+# TODO: Maybe validate BROWSERCTL_VERSION
 
 BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 

@@ -1,3 +1,4 @@
+import Foundation
 import PackagePlugin
 
 @main
@@ -15,6 +16,10 @@ struct BuildInfoPlugin: BuildToolPlugin {
                 displayName: "Generating BuildInfo.swift with Git tags",
                 executable: Path("/bin/sh"),
                 arguments: [scriptPath.string, generatedFile.string],
+                environment: [
+                    "BROWSERCTL_VERSION": ProcessInfo.processInfo.environment["BROWSERCTL_VERSION"]
+                        ?? ""
+                ],
                 outputFilesDirectory: outputDir
             )
         ]
