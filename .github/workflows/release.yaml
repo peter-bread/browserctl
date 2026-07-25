@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v7
-      - uses: peter-bread/homebrew-bump@v2
+      - uses: peter-bread/bump-homebrew@v2
         with:
           cellarman-app-client-id: ${{ vars.CELLARMAN_APP_CLIENT_ID }}
           cellarman-app-private-key: ${{ secrets.CELLARMAN_APP_PRIVATE_KEY }}
