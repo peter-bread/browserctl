@@ -2,13 +2,15 @@
 
 OUTPUT_FILE=$1
 
-GIT_VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "unknown")
+# First try BROWSERCTL_VERSION environment variable, then fall back to git describe.
+: "${BROWSERCTL_VERSION:=$(git describe --tags --always --dirty 2>/dev/null || echo "unknown")}"
+
 BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 cat >"$OUTPUT_FILE" <<EOF
 // AUTO-GENERATED FILE. DO NOT EDIT.
 public enum BuildInfo {
-    public static let version = "$GIT_VERSION"
+    public static let version = "$BROWSERCTL_VERSION"
     public static let buildDate = "$BUILD_DATE"
 }
 EOF
