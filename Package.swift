@@ -24,7 +24,13 @@ let package = Package(
             dependencies: [
                 "BrowserCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-            ]
+            ],
+            plugins: ["BuildInfoPlugin"]
+        ),
+
+        .plugin(
+            name: "BuildInfoPlugin",
+            capability: .buildTool()
         ),
 
         .testTarget(name: "BrowserCoreTests", dependencies: ["BrowserCore"]),
