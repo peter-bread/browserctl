@@ -21,7 +21,7 @@ jobs:
         uses: peter-bread/extract-version@v1
         with:
           ref: ${{ env.TAG }}
-          should-fail: true
+          should-fail: 'true'
 
       - name: Create GitHub Release
         run: gh release create "$TAG" --draft --generate-notes --title "Browserctl $VERSION"
