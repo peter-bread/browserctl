@@ -23,6 +23,8 @@ jobs:
   create:
     runs-on: ubuntu-slim
     steps:
+      - uses: actions/checkout@v7
+
       - name: Determine version number
         id: version
         uses: peter-bread/extract-version@v1
@@ -94,6 +96,8 @@ jobs:
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-slim
     steps:
+      - uses: actions/checkout@v7
+
       - name: Publish release
         run: gh release edit "$TAG" --draft=false
         env:
