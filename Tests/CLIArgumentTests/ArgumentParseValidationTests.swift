@@ -3,8 +3,6 @@ import XCTest
 
 @testable import browserctl
 
-// TODO: Might remove these tests -- currently this is not a test target.
-
 final class ArgumentParseValidationTests: XCTestCase {
     func testListIDOnlyAndNameOnlyFlagsThrowsValidationError() {
         // Arrange
@@ -24,6 +22,21 @@ final class ArgumentParseValidationTests: XCTestCase {
     func testListJSONFlagCombinedWithIDOnlyThrowsValidationError() {
         // Arrange
         let arguments = ["list", "--json", "--id-only"]
+
+        // Act
+        // Assert
+        do {
+            _ = try BrowserctlCommand.parseAsRoot(arguments)
+            XCTFail("Expected parsing to fail.")
+        } catch {
+            let message = BrowserctlCommand.message(for: error)
+            XCTAssertTrue(message.contains("--json cannot be combined"))
+        }
+    }
+
+    func testListJSONFlagCombinedWithNoMarkerThrowsValidationError() {
+        // Arrange
+        let arguments = ["list", "--json", "--no-marker"]
 
         // Act
         // Assert

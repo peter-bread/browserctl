@@ -40,12 +40,11 @@ let package = Package(
             dependencies: ["browserctl"]
         ),
 
-        // .testTarget(
-        //     name: "IntegrationTests",
-        //     dependencies: [
-        //         "browserctl",
-        //         .product(name: "ArgumentParser", package: "swift-argument-parser"),
-        //     ]
-        // ),
+        .testTarget(
+            name: "CLIArgumentTests",
+            dependencies: [
+                "browserctl"
+            ]
+        ),
     ]
 )
