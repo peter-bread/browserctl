@@ -17,16 +17,19 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: Determine version number
-        run: |
-          VERSION="${TAG#v}"
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        id: version
+        uses: peter-bread/extract-version@v1
+        with:
+          ref: ${{ env.TAG }}
+          should-fail: true
 
       - name: Create GitHub Release
         run: gh release create "$TAG" --draft --generate-notes --title "Browserctl $VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
     outputs:
-      version: ${{ env.VERSION }}
+      version: ${{ steps.version.outputs.version }}
 
   build:
     needs: [create]
