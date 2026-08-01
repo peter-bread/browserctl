@@ -7,7 +7,7 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
 env:
-  VERSION: ${{ github.ref_name }}
+  TAG: ${{ github.ref_name }}
 
 permissions:
   contents: write # To create releases
@@ -16,14 +16,23 @@ jobs:
   create:
     runs-on: ubuntu-slim
     steps:
+      - name: Determine version number
+        run: |
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
       - name: Create GitHub Release
-        run: gh release create "$VERSION" --draft --generate-notes
+        run: gh release create "$TAG" --draft --generate-notes --title "Browserctl $VERSION"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      version: ${{ env.VERSION }}
 
   build:
     needs: [create]
     runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.create.outputs.version }}
     steps:
       - uses: actions/checkout@v7
 
@@ -32,12 +41,17 @@ jobs:
           swift build -c release
           echo "BIN=.build/release/browserctl" >> "$GITHUB_ENV"
 
+      - name: Check that version was embedded correctly
+        run: |
+          VERSION_OUTPUT=$("$BIN" --version)
+          [[ $VERSION_OUTPUT == "browserctl $VERSION" ]]
+
       - name: Generate manpage
         run: |
           swift package plugin generate-manual
           echo "MAN=.build/plugins/GenerateManual/outputs/browserctl/browserctl.1" >> "$GITHUB_ENV"
 
-      - name: Archive name
+      - name: Determine archive name
         run: echo "ARCHIVE=browserctl-$VERSION" >> "$GITHUB_ENV"
 
       - name: Create archive directories
@@ -49,9 +63,11 @@ jobs:
 
       - name: Generate Completions
         run: |
-          "$BIN" --generate-completion-script bash > "$ARCHIVE"/share/completions/browserctl.bash
-          "$BIN" --generate-completion-script zsh > "$ARCHIVE"/share/completions/_browserctl
-          "$BIN" --generate-completion-script fish > "$ARCHIVE"/share/completions/browserctl.fish
+          "$BIN" --generate-completion-script bash > "$COMP_DIR"/browserctl.bash
+          "$BIN" --generate-completion-script zsh > "$COMP_DIR"/_browserctl
+          "$BIN" --generate-completion-script fish > "$COMP_DIR"/browserctl.fish
+        env:
+          COMP_DIR: ${{ env.ARCHIVE }}/share/completions
 
       - name: Create archive
         run: |
@@ -59,7 +75,7 @@ jobs:
           echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
 
       - name: Upload release archive
-        run: gh release upload "$VERSION" "$ASSET"
+        run: gh release upload "$TAG" "$ASSET"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -68,7 +84,7 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: Publish release
-        run: gh release edit "$VERSION" --draft=false
+        run: gh release edit "$TAG" --draft=false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
