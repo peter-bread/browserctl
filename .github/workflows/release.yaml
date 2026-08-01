@@ -6,65 +6,74 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
 
+env:
+  VERSION: ${{ github.ref_name }}
+
+permissions:
+  contents: write # To create releases
+
 jobs:
-  macos:
-    permissions:
-      contents: write
-    runs-on: macos-26
+  create:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Create GitHub Release
+        run: gh release create "$VERSION" --draft --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: [create]
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Build (release configuration)
-        run: make release
+
+      - name: Build executable
+        run: |
+          swift build -c release
+          echo "BIN=.build/release/browserctl" >> "$GITHUB_ENV"
+
       - name: Generate manpage
-        run: make generate-manpage
+        run: |
+          swift package plugin generate-manual
+          echo "MAN=.build/plugins/GenerateManual/outputs/browserctl/browserctl.1" >> "$GITHUB_ENV"
 
-      - name: Package
-        id: package
-        run: |-
-          # TODO: Use install instead of mv/cp?
-          mkdir -p "$PKG"/{bin,share/man/man1}
+      - name: Archive name
+        run: echo "ARCHIVE=browserctl-$VERSION" >> "$GITHUB_ENV"
 
-          cp README.md "$PKG"
-          cp LICENSE "$PKG"
+      - name: Create archive directories
+        run: |
+          mkdir -p "$ARCHIVE"/{bin,share/{man/man1,completions}}
+          cp "$BIN" "$ARCHIVE"/bin
+          cp "$MAN" "$ARCHIVE"/share/man/man1
+          cp {README.md,LICENSE} "$ARCHIVE"
 
-          mv ./.build/release/browserctl "$PKG"/bin
-          mv ./.build/plugins/GenerateManual/outputs/browserctl/browserctl.1 "$PKG"/share/man/man1
-          # TODO: Should we package completions as well, or just let users generate them manually.
+      - name: Generate Completions
+        run: |
+          "$BIN" --generate-completion-script bash > "$ARCHIVE"/share/completions/browserctl.bash
+          "$BIN" --generate-completion-script zsh > "$ARCHIVE"/share/completions/_browserctl
+          "$BIN" --generate-completion-script fish > "$ARCHIVE"/share/completions/browserctl.fish
 
-          # TODO: Should we include a '-macos' suffix
+      - name: Create archive
+        run: |
+          tar -czvf "$ARCHIVE.tar.gz" "$ARCHIVE"
+          echo "ASSET=$ARCHIVE.tar.gz" >> "$GITHUB_ENV"
 
-          tar -czvf "$PKG.tar.gz" "$PKG"
-
-          echo "name=$PKG" >> "$GITHUB_OUTPUT"
-          echo "path=$PKG.tar.gz" >> "$GITHUB_OUTPUT"
+      - name: Upload release archive
+        run: gh release upload "$VERSION" "$ASSET"
         env:
-          PKG: browserctl-${{ github.ref_name }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ steps.package.outputs.name }}
-          path: ${{ steps.package.outputs.path }}
-          archive: false # We have already used tar so we do not need to zip too
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
-    needs: macos
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
+    needs: [build]
+    runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
-      - name: Create release
-        run: |
-          gh release create "$TAG" --generate-notes "$ASSET"
+      - name: Publish release
+        run: gh release edit "$VERSION" --draft=false
         env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-          ASSET: browserctl-${{ github.ref_name }}.tar.gz
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   bump-homebrew:
+    needs: [build]
     runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v7
