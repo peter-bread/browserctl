@@ -40,7 +40,9 @@ echo "Changing to $TMP"
 
 cd "$TMP" || exit
 
-PACKAGE=browserctl-$TAG
+VERSION="${TAG#v}"
+
+PACKAGE=browserctl-$VERSION
 TARBALL=$PACKAGE.tar.gz
 TARBALL_URL=https://github.com/peter-bread/browserctl/releases/download/$TAG/$TARBALL
 
@@ -65,4 +67,4 @@ maybe-sudo install -m 755 "$PACKAGE"/bin/browserctl "$PREFIX"/bin
 maybe-sudo install -d "$PREFIX"/share/man/man1
 maybe-sudo install -m 644 "$PACKAGE"/share/man/man1/browserctl.1 "$PREFIX"/share/man/man1
 
-echo "Installed browserctl $TAG to $PREFIX"
+echo "Installed browserctl $VERSION (tag: $TAG) to $PREFIX"
