@@ -32,6 +32,12 @@ jobs:
           ref: ${{ env.TAG }}
           should-fail: 'true'
 
+      - name: Print version
+        run: |
+          echo "$VERSION"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
       - name: Create GitHub Release
         run: gh release create "$TAG" --draft --generate-notes --title "Browserctl $VERSION"
         env:
@@ -54,8 +60,10 @@ jobs:
           echo "BIN=.build/release/browserctl" >> "$GITHUB_ENV"
 
       - name: Check that version was embedded correctly
+        if: github.event_name != 'workflow_dispatch'
         run: |
           VERSION_OUTPUT=$("$BIN" --version)
+          echo "$VERSION_OUTPUT"
           [[ $VERSION_OUTPUT == "browserctl $VERSION" ]]
 
       - name: Generate manpage
