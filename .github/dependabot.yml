@@ -9,7 +9,6 @@ updates:
       day: monday
       time: "07:00"
       timezone: Europe/London
-    open-pull-requests-limit: 0
 
   - package-ecosystem: swift
     directory: "/"
@@ -18,4 +17,3 @@ updates:
       day: monday
       time: "07:00"
       timezone: Europe/London
-    open-pull-requests-limit: 0
